@@ -125,19 +125,30 @@ def NextLexographicalString(s, bytesMin, bytesMax, charSet = allChr):
 	sortedSet = sorted(charSet)
         retval = list(s)
 	length = len(s)
+	#If we're outside of our specified min/max length, throw a value error (bad length).
 	if length < bytesMin or length > bytesMax:
-		raise ValueError
+		raise ValueError, "Length does not fall between bytesMin and bytesMax!"
+	#If we're not at the maximum number of bytes, the next lexographical string is always
+	#the current string + the "minimum" member of our character set. E.g. a -> aa or b -> ba
+	#for just ascii lowercase characters.
 	if length != bytesMax:
 		return s + min(charSet)
+	#If we're at bytesMax...
 	else:
+		#We use success to indicate if we could find a suitable next string.
 		success = False
 		for i in xrange(bytesMax-1, bytesMin-2, -1):
+			#If the this letter isn't the "maximum" lexographical character, simply bumpt it up by one.
 			if retval[i] != max(sortedSet):
 				retval[i] = sortedSet[sortedSet.index(retval[i])+1]
 				success = True
 				break 
+			#Otherwise it's the max, and we need to roll the string over to the next shorter string,
+			#ie, go from az -> b for bytesMax = 2
 			else:
 				retval[i] = ''
+		#If we couldn't find a non-maximum character, we're at the end of all possible strings.
+		#Therefore, throw an error since no next lexographical string exists!
 		if not success:
 			raise ValueError, "At maximum allowed string!"
 		else:
@@ -159,19 +170,28 @@ def PrevLexographicalString(s, bytesMin, bytesMax, charSet = allChr):
 	sortedSet = sorted(charSet)
 	retval = list(s)
 	length = len(s)
+	#If we're outside of our specified min/max length, throw a value error (bad length).
 	if length < bytesMin or length > bytesMax:
-		raise ValueError	
+		raise ValueError, "Length does not fall between bytesMin and bytesMax!"
+	#If we're at the minimum length, and at the minimum set of characters, no previous string will exist.	
 	if length == bytesMin and min(charSet)*bytesMin == s:
 		raise ValueError, "At minimum allowed string!"
+	#If we're not at bytesMax, we can simply go backwards by rolling the current character back on
+	#and tacking some maximums on. i.e. b -> azz for bytesMax = 3 and ascii_lowercase.
 	if length != bytesMax:
 		retval[length-1] = sortedSet[sortedSet.index(retval[length-1])-1]
 		retval += [max(sortedSet) for i in xrange(length-1, bytesMax-1)]
 		return "".join(retval)	
+	#If we're at bytesMax, things get a little more tricky..	
 	else:
 		for i in xrange(bytesMax-1, bytesMin-2, -1):
+			#For each character, going backwards, if we're not at the 
+			#lexographical minimum, we can just roll it back one.
 			if retval[i] != min(sortedSet):
 				retval[i] = sortedSet[sortedSet.index(retval[i])-1]
-				break 
+				break
+			#If we're at the lexograpical minimum, we need to remove it.
+			#I.e. ba -> b for ascii_lowercase. 
 			else:
 				retval[i] = ''
 				break
